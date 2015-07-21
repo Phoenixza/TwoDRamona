@@ -1,19 +1,62 @@
 package com.example.michael.twodramona;
 
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.TextView;
+
+import com.example.michael.twodramona.tools.BaseGameActivity;
+import com.example.michael.twodramona.tools.SimpleAnimationListener;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends BaseGameActivity {
+
+    private ViewGroup container;
+    public static final String TYPEFACE_TITLE = "FantasticFont";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        addTypeface(TYPEFACE_TITLE);
+        container = (ViewGroup) findViewById(R.id.container);
+
+
+
     }
 
+
+    private void showFragment() {
+        container.removeAllViews();
+        View start = getLayoutInflater().inflate(R.layout.start,null);
+        setTypeface((TextView) start.findViewById(R.id.title), TYPEFACE_TITLE);
+        start.findViewById(R.id.start).setOnClickListener(this);
+        container.addView(start);
+        Animation a = AnimationUtils.loadAnimation(this, R.anim.abc_fade_in);
+        start.startAnimation(a);
+    }
+
+    @Override
+    public void onClick(View view){
+        if(view.getId() == R.id.start){
+            Animation a = AnimationUtils.loadAnimation(this,R.anim.pulse);
+            a.setAnimationListener(new SimpleAnimationListener() {
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    startGame();
+                }
+            });
+            view.startAnimation(a);
+        }
+    }
+
+    public void startGame(){
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
