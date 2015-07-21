@@ -1,5 +1,6 @@
 package com.example.michael.twodramona;
 
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -7,14 +8,29 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.example.michael.twodramona.tools.BaseGameActivity;
 import com.example.michael.twodramona.tools.SimpleAnimationListener;
 
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends BaseGameActivity {
 
+public class MainActivity extends BaseGameActivity implements View.OnClickListener, Crap.OnBurstListener {
+
+    private ScheduledExecutorService executor;
+    private static final int CRAP_MAX = 13;
+    private static final float V_MAX = 1f;
+    private static final float SIZE_MAX = 128f;
+    private Random rnd = new Random();
+    private Drawable crapDrawable;
+    private Set<Crap> crap = new HashSet<Crap>();
     private ViewGroup container;
     public static final String TYPEFACE_TITLE = "FantasticFont";
 
@@ -25,7 +41,7 @@ public class MainActivity extends BaseGameActivity {
         addTypeface(TYPEFACE_TITLE);
         container = (ViewGroup) findViewById(R.id.container);
 
-
+        crapDrawable = getResources().getDrawable(R.drawable.papier);
 
     }
 
@@ -55,28 +71,45 @@ public class MainActivity extends BaseGameActivity {
     }
 
     public void startGame(){
-
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        container.removeAllViews();
+        crap.clear();
+        for(int i = 0; i>CRAP_MAX; i++){
+            crap.add(new Crap((FrameLayout) container, scale(V_MAX), scale(SIZE_MAX), rnd, crapDrawable, this));
         }
+        executor = Executors.newSingleThreadScheduledExecutor();
+        executor.scheduleAtFixedRate(moveRunnable, 0, 50, TimeUnit.MILLISECONDS);
+    }
 
-        return super.onOptionsItemSelected(item);
+    @Override
+    protected void onPause(){
+        super.onPause();
+        executor.shutdown();
+        crap.clear();
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        showFragment();
+    }
+
+    private Runnable moveRunnable = new Runnable(){
+        @Override
+        public void run(){
+            for(final  Crap c : crap) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        c.move();
+                    }
+                });
+            }
+        }
+    };
+
+    @Override
+    public void onBurst(Crap c) {
+        crap.remove(c);
+        crap.add(new Crap((FrameLayout) container, scale(V_MAX), scale(SIZE_MAX), rnd, crapDrawable,this));
     }
 }
